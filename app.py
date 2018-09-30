@@ -1,12 +1,15 @@
 from flask import Flask, render_template, redirect, request, url_for
 
 from datetime import datetime
+from contextlib import closing
 import os
+import sqlite3
 
 app = Flask(__name__)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_DIR = os.path.join(BASE_DIR, 'upload')
+DATABASE_NAME = "smarthouse"
 
 
 @app.route('/', methods=['GET'])
@@ -40,6 +43,20 @@ def upload_complete():
 def graph():
     return render_template('graph.html')
 
+
+@app.route('/sensor/value', methods=['GET'])
+def sensor_value():
+
+    sensor_id = request.args.get('sensor_id')
+    datetime = request.args.get('datetime')
+    value = request.args.get('value')
+
+    with closing(sqlite3.connect(DATABASE_NAME)) as conn:
+        c = conn.cursor()
+        sql = 'INSERT INTO sensor_value(sensor_id, datetime, value) VALUES (?, ?, ?)'
+        params = (sensor_id, datetime, value)
+        c.execute(sql, params)
+        conn.commit()
 
 if __name__ == '__main__':
     app.run(debug=True)
