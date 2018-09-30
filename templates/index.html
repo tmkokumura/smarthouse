@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<p>ファイルを選択してください。</p>
+<p>{{message}}</p>
+<form method="post" action="upload" enctype="multipart/form-data">
+    <input type="file" name="example" size="30">
+    <input type="submit" value="送信する">
+</form>
+{% endblock %}
