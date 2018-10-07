@@ -136,8 +136,6 @@ def sensor_value_list():
         }
         sensor_values.append(sensor_value)
 
-        print(sensor_id)
-
     return render_template('sensor_value_list.html', sensor_id=sensor_id, sensor_values=sensor_values)
 
 
@@ -172,8 +170,6 @@ def sensor_value_update():
         detect_id = request.form['detect_id']
         detect_dt = request.form['detect_dt']
         value = request.form['value']
-
-        print('sensor_id: {}'.format(sensor_id))
 
         # 登録の場合
         if detect_id == '':
@@ -233,14 +229,12 @@ def update(sql, params=None):
         conn.commit()
 
 
-def list_to_text(liststr):
+def list_to_text(data_list):
     text = ''
-    for i, s in enumerate(liststr):
-        text += str(s)
+    for data in data_list:
+        text += str(data)
         text += ','
     return text.rstrip(',')
-
-
 
 
 if __name__ == '__main__':
