@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>センサー値登録</h1>
+<form method="post" action="update">
+    <table>
+        <thead>
+            <tr>
+                {% if sensor_value|length > 0 %}
+                <td>センサーID</td>
+                {% endif %}
+                <td>検出日時</td>
+                <td>値</td>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                {% if sensor_value|length > 0 %}
+                <td>
+                    {{sensor_id}}
+                </td>
+                {% endif %}
+                <td>
+                    <input type="text" name="detect_dt" value="{{sensor_value.detect_dt}}">
+                </td>
+                <td>
+                    <input type="text" name="value" value="{{sensor_value.value}}">
+                </td>
+                <td>
+                    <input type="hidden" name="detect_id" value="{{sensor_value.detect_id}}">
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <input type="hidden" name="sensor_id" value="{{sensor_id}}">
+    <input type="submit" value="登録">
+</form>
+{% endblock %}

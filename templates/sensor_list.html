@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>センサー一覧</h1>
+<p>
+    <a href="update">センサーを登録する</a>
+</p>
+{% if sensors|length > 0 %}
+<div>
+    <table>
+        <thead>
+            <tr>
+                <td>センサーID</td>
+                <td>センサー名</td>
+                <td>説明</td>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sensor in sensors %}
+            <tr>
+                <td>
+                    {{sensor.sensor_id}}
+                </td>
+                <td>
+                    {{sensor.sensor_name}}
+                </td>
+                <td>
+                    {{sensor.description}}
+                </td>
+                <td>
+                    <a href="update?sensor_id={{sensor.sensor_id}}">修正する</a>
+                </td>
+                <td>
+                    <a href="value/list?sensor_id={{sensor.sensor_id}}">センサー値を確認する</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}

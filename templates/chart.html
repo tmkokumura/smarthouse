@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<canvas id="myChart"></canvas>
+<input type="hidden" id="datas" value="{{ datas }}">
+<input type="hidden" id="labels" value="{{ labels }}">
+<script>
+var ctx = document.getElementById('myChart').getContext('2d');
+var datas = document.getElementById('datas').value;
+console.log(datas);
+var labels = document.getElementById('labels').value;
+console.log(labels);
+var myChart = new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: labels.split(','),
+    datasets: [{
+      label: 'sensor',
+      data: datas.split(','),
+      backgroundColor: "rgba(153,255,51,0.4)"
+    },]
+  }
+});
+
+</script>
+{% endblock %}

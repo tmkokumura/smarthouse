@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>センサー値一覧</h1>
+<p>
+    <a href="/sensor/list">センサー一覧へ戻る</a>
+</p>
+<p>
+    <a href="update?sensor_id={{sensor_id}}">センサー値を登録する</a>
+</p>
+{% if sensor_values|length > 0 %}
+<table>
+    <thead>
+        <tr>
+            <td>センサーID</td>
+            <td>検出日時</td>
+            <td>値</td>
+        </tr>
+    </thead>
+    <tbody>
+        {% for sensor_value in sensor_values %}
+        <tr>
+            <td>
+                {{sensor_id}}
+            </td>
+            <td>
+                {{sensor_value.detect_dt}}
+            </td>
+            <td>
+                {{sensor_value.value}}
+            </td>
+            <td>
+                <a href="update?sensor_id={{sensor_value.sensor_id}}&detect_id={{sensor_value.detect_id}}">修正する</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+{% endblock %}

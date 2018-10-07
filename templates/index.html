@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
-<p>ファイルを選択してください。</p>
+<h1>Smart House</h1>
+<p><a href="/sensor/list">センサー一覧をみる</a></p>
+<p><a href="/chart">グラフをみる</a></p>
+<p>ファイルをアップロードする</p>
 <p>{{message}}</p>
 <form method="post" action="upload" enctype="multipart/form-data">
     <input type="file" name="example" size="30">
