@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, request, url_for
+from flask import Flask, render_template, redirect, request, url_for, jsonify, make_response
 
 from datetime import datetime
 from contextlib import closing
@@ -141,6 +141,16 @@ def sensor_value_list():
 
 @app.route('/sensor/value/update', methods=['GET', 'POST'])
 def sensor_value_update():
+    """
+    センサー値登録画面
+    :param
+        sensor_id: センサーID
+        detect_id: 検出ID
+        detext_dt: 検出日時
+        value: 検出値
+    :return:
+        result
+    """
 
     # 初期表示
     if request.method == 'GET':
@@ -197,6 +207,42 @@ def sensor_value_update():
             update(sql, params)
 
         return redirect(url_for('sensor_value_list', sensor_id=sensor_id), code=302)
+
+
+@app.route('/api/sensor/value', methods=['POST'])
+def sensor_value_update():
+    """
+    センサー値登録API
+    :param
+        sensor_id: センサーID
+        detext_dt: 検出日時
+        value: 検出値
+    :return:
+        result
+    """
+
+    # Formパラメータの取得
+    sensor_id = request.form['sensor_id']
+    detect_dt = request.form['detect_dt']
+    value = request.form['value']
+
+    # detect_idを求める
+    sql = 'SELECT MAX(detect_id) FROM sensor_values WHERE sensor_id = ?;'
+    params = (sensor_id,)
+    row = select(sql, params)[0]
+    detect_id = row[0]
+
+    if detect_id is None:
+        detect_id = 1
+    else:
+        detect_id += 1
+
+    # センサー値を登録する
+    sql = 'INSERT INTO sensor_values(sensor_id, detect_id, detect_dt, value) VALUES (?, ?, ?, ?);'
+    params = (sensor_id, detect_id, detect_dt, value)
+    insert(sql, params)
+
+    return make_response(jsonify({'result': 'ok'}))
 
 
 def select(sql, params=None):
