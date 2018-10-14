@@ -1,15 +1,16 @@
 from flask import Flask, render_template, redirect, request, url_for, jsonify, make_response
 
 from datetime import datetime
-from contextlib import closing
 import os
-import sqlite3
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+
+from util import db_utils
 
 app = Flask(__name__)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_DIR = os.path.join(BASE_DIR, 'upload')
-DATABASE_NAME = "smarthouse.sqlite"
 
 
 @app.route('/', methods=['GET'])
@@ -40,15 +41,25 @@ def upload_complete():
 
 @app.route('/chart', methods=['GET'])
 def chart():
-    sql = 'SELECT detect_dt, value FROM sensor_values WHERE sensor_id = 1 ORDER BY detect_dt;'
-    rows = select(sql)
-    detect_dt_list = [x[0] for x in rows]
-    value_list = [x[1] for x in rows]
 
-    labels = list_to_text(detect_dt_list)
-    datas = list_to_text(value_list)
+    # rows = select_sensor_values(1)
+    # detect_dt_list = [x[0] for x in rows]
+    # value_list = [x[1] for x in rows]
+    # labels = list_to_text(detect_dt_list)
+    # datas = list_to_text(value_list)
 
-    return render_template('chart.html', labels=labels, datas=datas)
+    rows = select_weather('Tokyo')
+    dt_list = [x[1] for x in rows]
+    temp_list = [x[2] for x in rows]
+    pressure_list = [x[3] for x in rows]
+    humidity_list = [x[4] for x in rows]
+
+    label = list_to_text(dt_list)
+    temp = list_to_text(temp_list)
+    pressure = list_to_text(pressure_list)
+    humidity = list_to_text(humidity_list)
+
+    return render_template('chart.html', label=label, temp=temp, pressure=pressure, humidity=humidity)
 
 
 @app.route('/sensor/list', methods=['GET'])
@@ -56,7 +67,7 @@ def sensor_list():
 
     sql = 'SELECT sensor_id, sensor_name, description FROM sensors WHERE del_flag = ? ORDER BY sensor_id;'
     params = ('0',)
-    rows = select(sql, params)
+    rows = db_utils.select(sql, params)
 
     sensors = []
     for row in rows:
@@ -84,7 +95,7 @@ def sensor_update():
         if sensor_id is not None:
             sql = 'SELECT sensor_id, sensor_name, description FROM sensors WHERE sensor_id = ? AND del_flag = ?;'
             params = (sensor_id, '0')
-            row = select(sql, params)[0]
+            row = db_utils.select(sql, params)[0]
             sensor = {
                 'sensor_id': row[0],
                 'sensor_name': row[1],
@@ -105,14 +116,14 @@ def sensor_update():
             # センサーを登録する
             sql = 'INSERT INTO sensors(sensor_name, description, del_flag) VALUES (?, ?, ?);'
             params = (sensor_name, description, '0')
-            insert(sql, params)
+            db_utils.insert(sql, params)
 
         # 更新の場合
         else:
             # センサー値を更新する
             sql = 'UPDATE sensors SET sensor_name = ?, description = ? WHERE sensor_id = ?;'
             params = (sensor_name, description, sensor_id)
-            update(sql, params)
+            db_utils.update(sql, params)
 
         return redirect(url_for('sensor_list'), code=302)
 
@@ -125,7 +136,7 @@ def sensor_value_list():
 
     sql = 'SELECT detect_id, detect_dt, value FROM sensor_values WHERE sensor_id = ? ORDER BY sensor_id, detect_dt, detect_id;'
     params = (sensor_id,)
-    rows = select(sql, params)
+    rows = db_utils.select(sql, params)
 
     sensor_values = []
     for row in rows:
@@ -164,7 +175,7 @@ def sensor_value_update():
         if detect_id is not None:
             sql = 'SELECT detect_id, detect_dt, value FROM sensor_values WHERE sensor_id = ? AND detect_id = ?;'
             params = (sensor_id, detect_id)
-            row = select(sql, params)[0]
+            row = db_utils.select(sql, params)[0]
             sensor_value = {
                 'detect_id': row[0],
                 'detect_dt': row[1],
@@ -186,7 +197,7 @@ def sensor_value_update():
             # detect_idを求める
             sql = 'SELECT MAX(detect_id) FROM sensor_values WHERE sensor_id = ?;'
             params = (sensor_id,)
-            row = select(sql, params)[0]
+            row = db_utils.select(sql, params)[0]
             detect_id = row[0]
 
             if detect_id is None:
@@ -197,20 +208,20 @@ def sensor_value_update():
             # センサー値を登録する
             sql = 'INSERT INTO sensor_values(sensor_id, detect_id, detect_dt, value) VALUES (?, ?, ?, ?);'
             params = (sensor_id, detect_id, detect_dt, value)
-            insert(sql, params)
+            db_utils.insert(sql, params)
 
         # 更新の場合
         else:
             # センサー値を更新する
             sql = 'UPDATE sensor_values SET detect_dt = ?, value = ? WHERE sensor_id = ? AND detect_id = ?;'
             params = (detect_dt, value, sensor_id, detect_id)
-            update(sql, params)
+            db_utils.update(sql, params)
 
         return redirect(url_for('sensor_value_list', sensor_id=sensor_id), code=302)
 
 
 @app.route('/api/sensor/value', methods=['POST'])
-def sensor_value_update():
+def sensor_value_api_update():
     """
     センサー値登録API
     :param
@@ -229,7 +240,7 @@ def sensor_value_update():
     # detect_idを求める
     sql = 'SELECT MAX(detect_id) FROM sensor_values WHERE sensor_id = ?;'
     params = (sensor_id,)
-    row = select(sql, params)[0]
+    row = db_utils.select(sql, params)[0]
     detect_id = row[0]
 
     if detect_id is None:
@@ -240,39 +251,22 @@ def sensor_value_update():
     # センサー値を登録する
     sql = 'INSERT INTO sensor_values(sensor_id, detect_id, detect_dt, value) VALUES (?, ?, ?, ?);'
     params = (sensor_id, detect_id, detect_dt, value)
-    insert(sql, params)
+    db_utils.insert(sql, params)
 
     return make_response(jsonify({'result': 'ok'}))
 
 
-def select(sql, params=None):
-    with closing(sqlite3.connect(DATABASE_NAME)) as conn:
-        c = conn.cursor()
-        if params is None:
-            c.execute(sql)
-        else:
-            c.execute(sql, params)
-        return c.fetchall()
+def select_sensor_values(sensor_id):
+    sql = 'SELECT detect_dt, value FROM sensor_values WHERE sensor_id = ? ORDER BY detect_dt;'
+    params = (sensor_id,)
+    return db_utils.select(sql, params=params)
 
 
-def insert(sql, params=None):
-    with closing(sqlite3.connect(DATABASE_NAME)) as conn:
-        c = conn.cursor()
-        if params is None:
-            c.execute(sql)
-        else:
-            c.execute(sql, params)
-        conn.commit()
-
-
-def update(sql, params=None):
-    with closing(sqlite3.connect(DATABASE_NAME)) as conn:
-        c = conn.cursor()
-        if params is None:
-            c.execute(sql)
-        else:
-            c.execute(sql, params)
-        conn.commit()
+def select_weather(city):
+    sql = 'SELECT city, dt, temp, pressure, humidity, wind_speed, wind_deg, description, sub_description \
+            FROM weather WHERE city = ? ORDER BY city ASC, dt ASC;'
+    params = (city,)
+    return db_utils.select(sql, params=params)
 
 
 def list_to_text(data_list):

@@ -1,2 +1,3 @@
 CREATE TABLE sensors(sensor_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, sensor_name TEXT NOT NULL, description TEXT, del_flag TEXT NOT NULL);
 CREATE TABLE sensor_values(sensor_id INTEGER NOT NULL, detect_id INTEGER NOT NULL, detect_dt TEXT NOT NULL, value NUMERIC NOT NULL);
+CREATE TABLE weather(city TEXT NOT NULL, dt TEXT NOT NULL, temp REAL, pressure INTEGER, humidity INTEGER, wind_speed REAL, wind_deg INTEGER, description TEXT, sub_description TEXT);
