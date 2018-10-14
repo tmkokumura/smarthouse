@@ -10,7 +10,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from util import db_utils
 
-logging.basicConfig(level=logging.DEBUG)
+log_fmt = '%(asctime)s %(levelname)s %(name)s :%(message)s'
+logging.basicConfig(level=logging.DEBUG, format=log_fmt)
 
 
 def get_insert_params(data_dict):
