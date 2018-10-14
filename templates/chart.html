@@ -1,23 +1,36 @@
 {% extends "base.html" %}
 {% block content %}
 <canvas id="myChart"></canvas>
-<input type="hidden" id="datas" value="{{ datas }}">
-<input type="hidden" id="labels" value="{{ labels }}">
+
+<input type="hidden" id="label" value="{{ label }}">
+<input type="hidden" id="temp" value="{{ temp }}">
+<input type="hidden" id="pressure" value="{{ pressure }}">
+<input type="hidden" id="humidity" value="{{ humidity }}">
+
 <script>
 var ctx = document.getElementById('myChart').getContext('2d');
-var datas = document.getElementById('datas').value;
-console.log(datas);
-var labels = document.getElementById('labels').value;
-console.log(labels);
+var label = document.getElementById('label').value;
+var temp = document.getElementById('temp').value;
+var pressure = document.getElementById('pressure').value;
+var humidity = document.getElementById('humidity').value;
+
 var myChart = new Chart(ctx, {
   type: 'line',
   data: {
-    labels: labels.split(','),
+    labels: label.split(','),
     datasets: [{
-      label: 'sensor',
-      data: datas.split(','),
-      backgroundColor: "rgba(153,255,51,0.4)"
-    },]
+      label: 'temp',
+      data: temp.split(','),
+      backgroundColor: "rgba(153,255,0,0.4)"
+    },{
+      label: 'pressure',
+      data: pressure.split(','),
+      backgroundColor: "rgba(255,0,153,0.4)"
+    },{
+      label: 'humidity',
+      data: humidity.split(','),
+      backgroundColor: "rgba(0,153,255,0.4)"
+    }]
   }
 });
 
