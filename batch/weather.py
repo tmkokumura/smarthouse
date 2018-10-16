@@ -26,7 +26,7 @@ def get_insert_params(data_dict):
     pressure = main_dict['pressure']                # hPa
     humidity = main_dict['humidity']                # %
     wind_speed = wind_dict['speed']                 # m/s
-    wind_deg = wind_dict['deg']                     # degree
+    wind_deg = wind_dict.get('deg', None)           # degree
     description = weather_dict['main']
     sub_description = weather_dict['description']
 
@@ -76,9 +76,12 @@ if __name__ == '__main__':
         logging.info('execute api')
         status_code, res_dict = request()
 
+        logging.info('raw response body: {}'.format(res_dict))
+
         if status_code == 200:
             logging.info('execute select')
             count = select_weather(res_dict)
+            logging.info('count: {}'.format(count))
 
             if count == 0:
                 logging.info('execute insert')
