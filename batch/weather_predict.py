@@ -18,7 +18,7 @@ SMTP_SERVER = 'smtp.gmail.com'
 SMTP_PORT = '587'
 SMTP_USER = 'buntshift@gmail.com'
 SMTP_PASSWORD = 'obviously0621YES'
-TO_ADDRESS = ['buntshift@gmail.com', 'y_momo_12@yahoo.co.jp']
+TO_ADDRESS = ['buntshift@gmail.com', 'y_momo_12@yahoo.co.jp', 'chigm0703@gmail.com']
 SUBJECT = '傘を持っていこう'
 BODY = 'pythonでメール送信'
 
@@ -50,7 +50,7 @@ def send(from_addr, to_addrs, msg):
     smtpobj.starttls()
     smtpobj.ehlo()
     smtpobj.login(SMTP_USER, SMTP_PASSWORD)
-    smtpobj.sendmail(from_addr, ','.join(to_addrs), msg.as_string())
+    smtpobj.sendmail(from_addr, to_addrs, msg.as_string())
     smtpobj.close()
 
 
@@ -80,7 +80,7 @@ def request():
 def get_weather_text(api_text):
     if api_text == 'Clear':
         return '晴'
-    elif api_text == 'Cloud':
+    elif api_text == 'Clouds':
         return 'くもり'
     elif api_text == 'Rain':
         return '雨'
@@ -95,6 +95,43 @@ def has_rain(weather_list):
     return False
 
 
+def alert(weather_list):
+    params = {"dt1": datetime.fromtimestamp(weather_list[0][0]),
+              "weather1": get_weather_text(weather_list[0][1]),
+              "dt2": datetime.fromtimestamp(weather_list[1][0]),
+              "weather2": get_weather_text(weather_list[1][1]),
+              "dt3": datetime.fromtimestamp(weather_list[2][0]),
+              "weather3": get_weather_text(weather_list[2][1]),
+              "dt4": datetime.fromtimestamp(weather_list[3][0]),
+              "weather4": get_weather_text(weather_list[3][1]),
+              "dt5": datetime.fromtimestamp(weather_list[4][0]),
+              "weather5": get_weather_text(weather_list[4][1]),
+              "dt6": datetime.fromtimestamp(weather_list[5][0]),
+              "weather6": get_weather_text(weather_list[5][1])
+              }
+
+    logging.info('send mail to {}'.format(TO_ADDRESS))
+    message_body = TEMPLATE.format(**params)
+    msg = create_message(SMTP_USER, TO_ADDRESS, SUBJECT, message_body)
+    send(SMTP_USER, TO_ADDRESS, msg)
+
+
+def execute(now):
+    status_code, res_dict = request()
+
+    if status_code == 200:
+        max_time = now + timedelta(hours=18)
+        max_unix_time = int(max_time.timestamp())
+        weather_list = parse(res_dict, max_unix_time)
+        logging.info('weather_list: {}'.format(weather_list))
+
+        if has_rain(weather_list):
+            alert(weather_list)
+
+    else:
+        logging.info('api error code: {}'.format(status_code))
+
+
 if __name__ == '__main__':
     logging.info('Start [weather_predict.py]')
 
@@ -105,35 +142,7 @@ if __name__ == '__main__':
         logging.info('now: {}'.format(now))
 
         if now.hour == 5:
-
-            status_code, res_dict = request()
-
-            if status_code == 200:
-                max_time = now + timedelta(hours=18)
-                max_unix_time = int(max_time.timestamp())
-                weather_list = parse(res_dict, max_unix_time)
-                logging.info('weather_list: {}'.format(weather_list))
-
-                if has_rain(weather_list):
-                    params = {"dt1": datetime.fromtimestamp(weather_list[0][0]),
-                              "weather1": get_weather_text(weather_list[0][1]),
-                              "dt2": datetime.fromtimestamp(weather_list[1][0]),
-                              "weather2": get_weather_text(weather_list[1][1]),
-                              "dt3": datetime.fromtimestamp(weather_list[2][0]),
-                              "weather3": get_weather_text(weather_list[2][1]),
-                              "dt4": datetime.fromtimestamp(weather_list[3][0]),
-                              "weather4": get_weather_text(weather_list[3][1]),
-                              "dt5": datetime.fromtimestamp(weather_list[4][0]),
-                              "weather5": get_weather_text(weather_list[4][1]),
-                              "dt6": datetime.fromtimestamp(weather_list[5][0]),
-                              "weather6": get_weather_text(weather_list[5][1])
-                              }
-
-                    logging.info('send mail to {}'.format(TO_ADDRESS))
-                    message_body = TEMPLATE.format(**params)
-                    msg = create_message(SMTP_USER, TO_ADDRESS, SUBJECT, message_body)
-                    send(SMTP_USER, TO_ADDRESS, msg)
-
+            execute(now)
         else:
             logging.info('skip')
 
@@ -141,3 +150,6 @@ if __name__ == '__main__':
         time.sleep(sleep_time)
 
     logging.info('End [weather_predict]')
+
+
+
